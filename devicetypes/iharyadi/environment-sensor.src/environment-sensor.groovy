@@ -7,7 +7,7 @@ metadata {
         capability "RelativeHumidityMeasurement"
         capability "Illuminance Measurement"
         
-		attribute "pressure", "string"
+        attribute "pressure", "string"
 
         fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0B05", manufacturer: "KMPCIL", model: "RES001BME280", deviceJoinName: "Environment Sensor"
         }
@@ -18,29 +18,29 @@ metadata {
 
     tiles(scale: 2) {
         multiAttributeTile(name: "temperature", type: "generic", width: 6, height: 4, canChangeIcon: true) {
-			tileAttribute("device.temperature", key: "PRIMARY_CONTROL") {
-				attributeState "temperature", label: '${currentValue}°',
-						backgroundColors: [
-								[value: 31, color: "#153591"],
-								[value: 44, color: "#1e9cbb"],
-								[value: 59, color: "#90d2a7"],
-								[value: 74, color: "#44b621"],
-								[value: 84, color: "#f1d801"],
-								[value: 95, color: "#d04e00"],
-								[value: 96, color: "#bc2323"]
-						]
-			}
-		}
-		valueTile("humidity", "device.humidity", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
-			state "humidity", label: 'Humidity ${currentValue}%', defaultState: true
-		}
+            tileAttribute("device.temperature", key: "PRIMARY_CONTROL") {
+                attributeState "temperature", label: '${currentValue}°',
+                        backgroundColors: [
+                                [value: 31, color: "#153591"],
+                                [value: 44, color: "#1e9cbb"],
+                                [value: 59, color: "#90d2a7"],
+                                [value: 74, color: "#44b621"],
+                                [value: 84, color: "#f1d801"],
+                                [value: 95, color: "#d04e00"],
+                                [value: 96, color: "#bc2323"]
+                        ]
+            }
+        }
+        valueTile("humidity", "device.humidity", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
+            state "humidity", label: 'Humidity ${currentValue}%', defaultState: true
+        }
         valueTile("pressure", "device.pressure", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
             state "pressure", label: 'Pressure ${currentValue}kPa', defaultState: true
         }
         
         valueTile("illuminance", "device.illuminance", width:6, height: 2) {
-			state "luminosity", label:'${currentValue} ${unit}', unit:"lux"
-		}
+            state "luminosity", label:'${currentValue} ${unit}', unit:"lux"
+        }
         
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
@@ -52,8 +52,8 @@ metadata {
         tiles_detail.add("pressure")
         tiles_detail.add("illuminance")
         MapDiagAttributes().each{ k, v -> valueTile("$v", "device.$v", width: 2, height: 2, wordWrap: true) {
-        		state "val", label: "$v \n"+'${currentValue}', defaultState: true
-    		};
+                state "val", label: "$v \n"+'${currentValue}', defaultState: true
+            };
             tiles_detail.add(v);
         }
         tiles_detail.add("refresh")
@@ -80,86 +80,86 @@ private def NUMBER_OF_RESETS_ID()
 
 private def MAC_TX_UCAST_RETRY_ID()
 {
-	return 0x0104;
+    return 0x0104;
 }
 
 private def MAC_TX_UCAST_FAIL_ID()
 {
-	return 0x0105;
+    return 0x0105;
 }
 
 private def NWK_DECRYPT_FAILURES_ID()
 {
-	return 0x0115;
+    return 0x0115;
 }
 
 private def PACKET_VALIDATE_DROP_COUNT_ID()
 {
-	return 0x011A;
+    return 0x011A;
 }
 
 private def PARENT_COUNT_ID()
 {
-	return 0x011D+1;
+    return 0x011D+1;
 }
 
 private def CHILD_COUNT_ID()
 {
-	return 0x011D+2;
+    return 0x011D+2;
 }
 
 private def NEIGHBOR_COUNT_ID()
 {
-	return 0x011D+3;
+    return 0x011D+3;
 }
 
 private def LAST_RSSI_ID()
 {
-	return 0x011D;
+    return 0x011D;
 }
 
 private def DIAG_CLUSTER_ID()
 {
-	return 0x0B05;
+    return 0x0B05;
 }
 
 private def TEMPERATURE_CLUSTER_ID()
 {
-	return 0x0402;
+    return 0x0402;
 }
 
 private def PRESSURE_CLUSTER_ID()
 {
-	return 0x0403;
+    return 0x0403;
 }
 
 private def HUMIDITY_CLUSTER_ID()
 {
-	return 0x0405;
+    return 0x0405;
 }
 
 private def ILLUMINANCE_CLUSTER_ID()
 {
-	return 0x0400;
+    return 0x0400;
 }
 
 private def SENSOR_VALUE_ATTRIBUTE()
 {
-	return 0x0000;
+    return 0x0000;
 }
 
 private def MapDiagAttributes()
 {
-	def result = [(CHILD_COUNT_ID()):'Children',
+    def result = [(CHILD_COUNT_ID()):'Children',
         (NEIGHBOR_COUNT_ID()):'Neighbor',
         (NUMBER_OF_RESETS_ID()):'ResetCount',
-    	(MAC_TX_UCAST_RETRY_ID()):'TXRetry',
+        (MAC_TX_UCAST_RETRY_ID()):'TXRetry',
         (MAC_TX_UCAST_FAIL_ID()):'TXFail',
         (LAST_RSSI_ID()):'RSSI',
         (NWK_DECRYPT_FAILURES_ID()):'DecryptFailure',
         (PACKET_VALIDATE_DROP_COUNT_ID()):'PacketDrop'] 
 
-	return result;
+    return result;
 }
 
 private def createDiagnosticEvent( String attr_name, type, value )
@@ -184,8 +184,8 @@ private def parseDiagnosticEvent(def descMap)
     def attr_name = MapDiagAttributes()[descMap.attrInt];
     if(!attr_name)
     {
-    	return null;
-  	}
+        return null;
+    }
     
     return createDiagnosticEvent(attr_name, descMap.encoding, descMap.value)
 }
@@ -194,7 +194,7 @@ private def parsePressureEvent(def descMap)
 {       
     if(descMap.attrId != "0000")
     {
-    	return null
+        return null
     }
     
     def result = [:]
@@ -208,41 +208,41 @@ private def parsePressureEvent(def descMap)
 
 private def createIlluminanceEvent(int ilumm)
 {
-	def result = [:]
+    def result = [:]
     result.name = "illuminance"
     result.translatable = true
     if(ilumm == 0)
     {
-    	result.value = 0.0
+        result.value = 0.0
     }
     else
     {
-    	result.value = String.format("%.2f", 10 ** (((double) ilumm / 10000.0) -1.0))
+        result.value = String.format("%.2f", 10 ** (((double) ilumm / 10000.0) -1.0))
     }
     result.descriptionText = "{{ device.displayName }} illuminance was $result.value"
     return result
 }
 private String ilummStringPrefix()
 {
-	return "illuminance: "
+    return "illuminance: "
 }
 
 private def parseIlluminanceEventFromString(String description)
 {
-	if(!description.startsWith(ilummStringPrefix()))
+    if(!description.startsWith(ilummStringPrefix()))
     {
-    	return null
+        return null
     }
-   	int ilumm = Integer.parseInt(description.substring(ilummStringPrefix().length()))
+    int ilumm = Integer.parseInt(description.substring(ilummStringPrefix().length()))
     
     return createIlluminanceEvent(ilumm)
 }
 
 def parseIlluminanceEvent(def descMap)
 {       
-	if(descMap.attrId != "0000")
+    if(descMap.attrId != "0000")
     {
-    	return null
+        return null
     }
     
     int res =  zigbee.convertHexToInt(descMap.value)
@@ -252,8 +252,8 @@ def parseIlluminanceEvent(def descMap)
 
 def parseCustomEvent(String description)
 {
-	def event = null
-	def descMap = zigbee.parseDescriptionAsMap(description)
+    def event = null
+    def descMap = zigbee.parseDescriptionAsMap(description)
     if(description?.startsWith("read attr - raw:"))
     {
         if(descMap?.clusterInt == DIAG_CLUSTER_ID())
@@ -272,24 +272,24 @@ def parseCustomEvent(String description)
             event = parseIlluminanceEvent(descMap);
         }
     }
-	return event
+    return event
 }
 
 private String tempStringPrefix()
 {
-	return "temperature:"
+    return "temperature:"
 }
 
 private String humidityStringPrefix()
 {
-	return "humidity:"
+    return "humidity:"
 }
 
 private def createAdjustedTempString(double val)
 {
-	double adj = 0.0
-	if (tempOffset) {
-    	adj = tempOffset
+    double adj = 0.0
+    if (tempOffset) {
+        adj = tempOffset
     }
     
     return tempStringPrefix() + " " +(val + adj).toString()
@@ -297,9 +297,9 @@ private def createAdjustedTempString(double val)
 
 private def createAdjustedHumString(double val)
 {
-	double adj = 0.0
-	if (humOffset) {
-    	adj = humOffset
+    double adj = 0.0
+    if (humOffset) {
+        adj = humOffset
     }
     
     return humidityStringPrefix() + " " +(val + adj).toString() + "%"
@@ -310,21 +310,21 @@ private def adjustTempValue(String description)
     
     if(description.startsWith(tempStringPrefix()))
     {
-    	double d = Double.parseDouble(description.substring(tempStringPrefix().length()))
+        double d = Double.parseDouble(description.substring(tempStringPrefix().length()))
         return createAdjustedTempString(d)
     }
    
-   	if(description.startsWith(humidityStringPrefix()))
+    if(description.startsWith(humidityStringPrefix()))
     {
-    	double d = Double.parseDouble(description.substring(humidityStringPrefix().length()).replaceAll("[^\\d.]", ""))
+        double d = Double.parseDouble(description.substring(humidityStringPrefix().length()).replaceAll("[^\\d.]", ""))
         return createAdjustedHumString(d)
     }
     
     if(!description.startsWith("catchall:"))
     {
-    	return description
+        return description
     }
-	
+    
     def descMap = zigbee.parseDescriptionAsMap(description)
     
     if(descMap.attrInt != SENSOR_VALUE_ATTRIBUTE())
@@ -334,11 +334,11 @@ private def adjustTempValue(String description)
     
     if( descMap.clusterInt == TEMPERATURE_CLUSTER_ID() )
     {
-		return createAdjustedTempString((double) zigbee.convertHexToInt(descMap.value) / 100.00)
+        return createAdjustedTempString((double) zigbee.convertHexToInt(descMap.value) / 100.00)
     }
     else if(descMap.clusterInt == HUMIDITY_CLUSTER_ID())
     {
-		return createAdjustedHumString((double) zigbee.convertHexToInt(descMap.value) / 100.00)
+        return createAdjustedHumString((double) zigbee.convertHexToInt(descMap.value) / 100.00)
     }
     
     return description 
@@ -351,23 +351,23 @@ def parse(String description) {
     log.debug "description is $description"
     
     def event = zigbee.getEvent(description)
-	if(event)
+    if(event)
     {
-    	sendEvent(event)
+        sendEvent(event)
         return
     }
     
     event = parseIlluminanceEventFromString(description)
     if(event)
     {
-    	sendEvent(event)
+        sendEvent(event)
         return
     }
     
-   	event = parseCustomEvent(description)
+    event = parseCustomEvent(description)
     if(event)
     {
-    	sendEvent(event)
+        sendEvent(event)
         return
     }
     log.warn "DID NOT PARSE MESSAGE : $description"
@@ -384,7 +384,7 @@ def on() {
 def refresh() {
     log.debug "Refresh"
     def cmds = zigbee.readAttribute(TEMPERATURE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) +
-    	zigbee.readAttribute(HUMIDITY_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) + 
+        zigbee.readAttribute(HUMIDITY_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) + 
         zigbee.readAttribute(PRESSURE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) +
         zigbee.readAttribute(ILLUMINANCE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) 
     MapDiagAttributes().each{ k, v -> cmds +=  zigbee.readAttribute(DIAG_CLUSTER_ID(), k) }
@@ -403,14 +403,14 @@ def configure() {
 }
 
 def updated() {
-	log.trace "updated():"
+    log.trace "updated():"
 
-	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
-		state.updatedLastRanAt = now()
-		
-		return response(configure())
-	}
-	else {
-		log.trace "updated(): Ran within last 2 seconds so aborting."
-	}
+    if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
+        state.updatedLastRanAt = now()
+        
+        return response(configure())
+    }
+    else {
+        log.trace "updated(): Ran within last 2 seconds so aborting."
+    }
 }
