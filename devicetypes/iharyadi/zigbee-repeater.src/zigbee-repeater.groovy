@@ -43,8 +43,8 @@ metadata {
         def tiles_detail = [];
         tiles_detail.add("switch")
         MapDiagAttributes().each{ k, v -> valueTile("$v", "device.$v", width: 2, height: 2) {
-        		state "val", label: "$v \n"+'${currentValue}', defaultState: true
-    		};
+                state "val", label: "$v \n"+'${currentValue}', defaultState: true
+            };
             tiles_detail.add(v);
         }
         tiles_detail.add("refresh")
@@ -56,76 +56,76 @@ metadata {
 
 private def NUMBER_OF_RESETS_ID()
 {
-	return 0x0000;
+    return 0x0000;
 }
 
 private def MAC_TX_UCAST_RETRY_ID()
 {
-	return 0x0104;
+    return 0x0104;
 }
 
 private def MAC_TX_UCAST_FAIL_ID()
 {
-	return 0x0105;
+    return 0x0105;
 }
 
 private def NWK_DECRYPT_FAILURES_ID()
 {
-	return 0x0115;
+    return 0x0115;
 }
 
 private def PACKET_VALIDATE_DROP_COUNT_ID()
 {
-	return 0x011A;
+    return 0x011A;
 }
 
 private def PARENT_COUNT_ID()
 {
-	return 0x011D+1;
+    return 0x011D+1;
 }
 
 private def CHILD_COUNT_ID()
 {
-	return 0x011D+2;
+    return 0x011D+2;
 }
 
 private def NEIGHBOR_COUNT_ID()
 {
-	return 0x011D+3;
+    return 0x011D+3;
 }
 
 private def LAST_RSSI_ID()
 {
-	return 0x011D;
+    return 0x011D;
 }
 
 private def DIAG_CLUSTER_ID()
 {
-	return 0x0B05;
+    return 0x0B05;
 }
 
 private def TEMPERATURE_CLUSTER_ID()
 {
-	return 0x0403;
+    return 0x0403;
 }
 
 private def MapDiagAttributes()
 {
-	def result = [(CHILD_COUNT_ID()):'Children',
+    def result = [(CHILD_COUNT_ID()):'Children',
         (NEIGHBOR_COUNT_ID()):'Neighbor',
         (NUMBER_OF_RESETS_ID()):'ResetCount',
-    	(MAC_TX_UCAST_RETRY_ID()):'TXRetry',
+        (MAC_TX_UCAST_RETRY_ID()):'TXRetry',
         (MAC_TX_UCAST_FAIL_ID()):'TXFail',
         (LAST_RSSI_ID()):'RSSI',
         (NWK_DECRYPT_FAILURES_ID()):'DecryptFailure',
         (PACKET_VALIDATE_DROP_COUNT_ID()):'PacketDrop'] 
 
-	return result;
+    return result;
 }
 
 private def createDiagnosticEvent( String attr_name, type, value )
 {
-	def result = [:]
+    def result = [:]
     result.name = attr_name
     result.translatable = true
     
@@ -145,8 +145,8 @@ def parseDiagnosticEvent(def descMap)
     def attr_name = MapDiagAttributes()[descMap.attrInt];
     if(!attr_name)
     {
-    	return null;
-  	}
+        return null;
+    }
     
     return createDiagnosticEvent(attr_name, descMap.encoding, descMap.value)
 }
@@ -157,18 +157,18 @@ def parse(String description) {
     def event = zigbee.getEvent(description)
     if(event)
     {
-   		log.debug "Recognized Zigbee Event"
+        log.debug "Recognized Zigbee Event"
     }
     else
     {
-    	def descMap = zigbee.parseDescriptionAsMap(description)
+        def descMap = zigbee.parseDescriptionAsMap(description)
         if(description?.startsWith("read attr"))
         {
             if(descMap?.clusterInt == DIAG_CLUSTER_ID())
             {
                 event = parseDiagnosticEvent(descMap);
             }
-    	}
+        }
     }
     
     event?sendEvent(event):{log.warn "DID NOT PARSE MESSAGE : $description"}
