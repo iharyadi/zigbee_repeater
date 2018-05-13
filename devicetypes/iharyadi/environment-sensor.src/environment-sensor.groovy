@@ -143,6 +143,11 @@ private def ILLUMINANCE_CLUSTER_ID()
 	return 0x0400;
 }
 
+private def SENSOR_VALUE_ATTRIBUTE()
+{
+	return 0x0000;
+}
+
 private def MapDiagAttributes()
 {
 	def result = [(CHILD_COUNT_ID()):'Children',
@@ -322,7 +327,7 @@ private def adjustTempValue(String description)
 	
     def descMap = zigbee.parseDescriptionAsMap(description)
     
-    if(descMap.attrInt != 0)
+    if(descMap.attrInt != SENSOR_VALUE_ATTRIBUTE())
     {
         return description
     }
@@ -378,10 +383,10 @@ def on() {
 
 def refresh() {
     log.debug "Refresh"
-    def cmds = zigbee.readAttribute(TEMPERATURE_CLUSTER_ID(), 0x0000) +
-    	zigbee.readAttribute(HUMIDITY_CLUSTER_ID(), 0x0000) + 
-        zigbee.readAttribute(PRESSURE_CLUSTER_ID(), 0x0000) +
-        zigbee.readAttribute(ILLUMINANCE_CLUSTER_ID(), 0x0000) 
+    def cmds = zigbee.readAttribute(TEMPERATURE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) +
+    	zigbee.readAttribute(HUMIDITY_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) + 
+        zigbee.readAttribute(PRESSURE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) +
+        zigbee.readAttribute(ILLUMINANCE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE()) 
     MapDiagAttributes().each{ k, v -> cmds +=  zigbee.readAttribute(DIAG_CLUSTER_ID(), k) }
    
     return cmds
@@ -390,9 +395,9 @@ def refresh() {
 def configure() {
     log.debug "Configuring Reporting and Bindings."
     List cmds = zigbee.temperatureConfig(5,300)
-    cmds = cmds + zigbee.configureReporting(HUMIDITY_CLUSTER_ID(), 0x0000, DataType.UINT16, 5, 300, 100)
-    cmds = cmds + zigbee.configureReporting(PRESSURE_CLUSTER_ID(), 0x0000, DataType.UINT16, 5, 300, 2)
-    cmds = cmds + zigbee.configureReporting(ILLUMINANCE_CLUSTER_ID(), 0x0000, DataType.UINT16, 30, 300, 500)
+    cmds = cmds + zigbee.configureReporting(HUMIDITY_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 5, 300, 100)
+    cmds = cmds + zigbee.configureReporting(PRESSURE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 5, 300, 2)
+    cmds = cmds + zigbee.configureReporting(ILLUMINANCE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 30, 300, 500)
     cmds = cmds + refresh();
     return cmds
 }
