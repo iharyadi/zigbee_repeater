@@ -75,7 +75,7 @@ metadata {
 
 private def NUMBER_OF_RESETS_ID()
 {
-	return 0x0000;
+    return 0x0000;
 }
 
 private def MAC_TX_UCAST_RETRY_ID()
