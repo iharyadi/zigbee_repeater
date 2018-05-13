@@ -164,7 +164,7 @@ private def MapDiagAttributes()
 
 private def createDiagnosticEvent( String attr_name, type, value )
 {
-	def result = [:]
+    def result = [:]
     result.name = attr_name
     result.translatable = true
     
@@ -192,7 +192,7 @@ private def parseDiagnosticEvent(def descMap)
 
 private def parsePressureEvent(def descMap)
 {       
-	if(descMap.attrId != "0000")
+    if(descMap.attrId != "0000")
     {
     	return null
     }
