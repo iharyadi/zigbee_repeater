@@ -7,12 +7,11 @@
 
 import physicalgraph.zigbee.zcl.DataType
 metadata {
-    definition (name: "ZigBee Repeater", namespace: "iharyadi", author: "iharyadi", ocfDeviceType: "oic.d.switch", runLocally: false, minHubCoreVersion: '000.019.00012', executeCommandsLocally: true) {
+    definition (name: "ZigBee Repeater", namespace: "iharyadi", author: "iharyadi", ocfDeviceType: "oic.d.switch", minHubCoreVersion: '000.019.00012', runLocally: false, executeCommandsLocally: true) {
         capability "Actuator"
         capability "Configuration"
         capability "Refresh"
         capability "Switch"
-
 
         fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0B05", manufacturer: "KMPCIL", model: "RES001", deviceJoinName: "ZB Repeater"
         }
