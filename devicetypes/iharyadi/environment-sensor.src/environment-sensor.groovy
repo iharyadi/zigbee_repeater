@@ -9,7 +9,7 @@ metadata {
         
         attribute "pressure", "string"
 
-        fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0B05", manufacturer: "KMPCIL", model: "RES001BME280", deviceJoinName: "Environment Sensor"
+        fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0B05, 0400", manufacturer: "KMPCIL", model: "RES001BME280", deviceJoinName: "Environment Sensor"
         }
 
     // simulator metadata
@@ -192,7 +192,7 @@ private def parseDiagnosticEvent(def descMap)
 
 private def parsePressureEvent(def descMap)
 {       
-    if(descMap.attrId != "0000")
+    if(zigbee.convertHexToInt(descMap.attrId) != SENSOR_VALUE_ATTRIBUTE())
     {
         return null
     }
@@ -240,7 +240,7 @@ private def parseIlluminanceEventFromString(String description)
 
 def parseIlluminanceEvent(def descMap)
 {       
-    if(descMap.attrId != "0000")
+    if(zigbee.convertHexToInt(descMap.attrId) != SENSOR_VALUE_ATTRIBUTE())
     {
         return null
     }
