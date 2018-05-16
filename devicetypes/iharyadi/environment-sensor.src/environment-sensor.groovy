@@ -1,3 +1,4 @@
+
 import physicalgraph.zigbee.zcl.DataType
 metadata {
     definition (name: "Environment Sensor", namespace: "iharyadi", author: "iharyadi", ocfDeviceType: "oic.r.temperature", runLocally: false, minHubCoreVersion: '000.019.00012', executeCommandsLocally: true) {
@@ -258,19 +259,21 @@ def parseCustomEvent(String description)
     {
         if(descMap?.clusterInt == DIAG_CLUSTER_ID())
         {
-            event = parseDiagnosticEvent(descMap);
+           event = parseDiagnosticEvent(descMap);
         }
         else if(descMap?.clusterInt == PRESSURE_CLUSTER_ID())
         {
-            event = parsePressureEvent(descMap);
+           event = parsePressureEvent(descMap);
         }
    }
    else if (description?.startsWith("catchall:"))
    {
-        if(descMap?.clusterInt == ILLUMINANCE_CLUSTER_ID())
-        {
-            event = parseIlluminanceEvent(descMap);
-        }
+       if(descMap?.clusterInt == ILLUMINANCE_CLUSTER_ID() && 
+           descMap.messageType == "00" && 
+           descMap.command == "01")
+       {
+           event = parseIlluminanceEvent(descMap);
+       }
     }
     return event
 }
@@ -408,7 +411,7 @@ def updated() {
     if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
         state.updatedLastRanAt = now()
         
-        return response(configure())
+        return response(refresh())
     }
     else {
         log.trace "updated(): Ran within last 2 seconds so aborting."
