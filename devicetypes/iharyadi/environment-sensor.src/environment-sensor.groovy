@@ -33,14 +33,14 @@ metadata {
             }
         }
         valueTile("humidity", "device.humidity", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
-            state "humidity", label: 'Humidity ${currentValue}%', defaultState: true
+            state "humidity", label: 'Humidity ${currentValue}${unit}', unit:"%", defaultState: true
         }
         valueTile("pressure", "device.pressure", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
-            state "pressure", label: 'Pressure ${currentValue}kPa', defaultState: true
+            state "pressure", label: 'Pressure ${currentValue}${unit}', unit:"kPa", defaultState: true
         }
         
         valueTile("illuminance", "device.illuminance", width:6, height: 2) {
-            state "luminosity", label:'${currentValue} ${unit}', unit:"lux"
+            state "illuminance", label: 'illuminance ${currentValue}${unit}', unit:"lux", defaultState: true
         }
         
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
@@ -400,7 +400,7 @@ def configure() {
     List cmds = zigbee.temperatureConfig(5,300)
     cmds = cmds + zigbee.configureReporting(HUMIDITY_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 5, 300, 100)
     cmds = cmds + zigbee.configureReporting(PRESSURE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 5, 300, 2)
-    cmds = cmds + zigbee.configureReporting(ILLUMINANCE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 30, 300, 500)
+    cmds = cmds + zigbee.configureReporting(ILLUMINANCE_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 15, 300, 300)
     cmds = cmds + refresh();
     return cmds
 }
