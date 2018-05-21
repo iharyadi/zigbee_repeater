@@ -40,7 +40,7 @@ metadata {
         }
         
         valueTile("illuminance", "device.illuminance", width:6, height: 2) {
-            state "illuminance", label: 'illuminance ${currentValue}${unit}', unit:"lux", defaultState: true
+            state "illuminance", label: 'illuminance ${currentValue}${unit}', unit:"Lux", defaultState: true
         }
         
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
@@ -191,20 +191,25 @@ private def parseDiagnosticEvent(def descMap)
     return createDiagnosticEvent(attr_name, descMap.encoding, descMap.value)
 }
 
+private def createPressureEvent(float pressure)
+{
+    def result = [:]
+    result.name = "pressure"
+    result.translatable = true
+    result.unit = "kPa"
+    result.value = pressure.round(1)
+    result.descriptionText = "{{ device.displayName }} pressure was $result.value"
+    return result
+}
+
 private def parsePressureEvent(def descMap)
 {       
     if(zigbee.convertHexToInt(descMap.attrId) != SENSOR_VALUE_ATTRIBUTE())
     {
         return null
     }
-    
-    def result = [:]
-    result.name = "pressure"
-    result.translatable = true
-    float press = (float)zigbee.convertHexToInt(descMap.value) / 10.0
-    result.value = press.round(2)
-    result.descriptionText = "{{ device.displayName }} pressure was $result.value"
-    return result
+    float pressure = (float)zigbee.convertHexToInt(descMap.value) / 10.0
+    return createPressureEvent(pressure)
 }
 
 private def createIlluminanceEvent(int ilumm)
@@ -212,6 +217,7 @@ private def createIlluminanceEvent(int ilumm)
     def result = [:]
     result.name = "illuminance"
     result.translatable = true
+    result.unit = "Lux"
     if(ilumm == 0)
     {
         result.value = 0.0
