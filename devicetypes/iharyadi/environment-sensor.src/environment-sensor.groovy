@@ -9,7 +9,7 @@ metadata {
         capability "Illuminance Measurement"
         
         attribute "pressure", "string"
-
+        
         fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0B05, 0400", manufacturer: "KMPCIL", model: "RES001BME280", deviceJoinName: "Environment Sensor"
         }
 
@@ -64,8 +64,13 @@ metadata {
     }
     
     preferences {
-        input "tempOffset", "decimal", title: "Degrees", description: "Adjust temperature by this many degrees",
+        input "tempOffset", "decimal", title: "Degrees", description: "Adjust temperature by this many degrees in Celcius",
               range: "*..*", displayDuringSetup: false
+    }
+    
+    preferences {
+        input "tempFilter", "decimal", title: "Coeficient", description: "Temperature filter between 0.0 and 1.0",
+              range: "0..1", displayDuringSetup: false
     }
     
     preferences {
@@ -296,12 +301,20 @@ private String humidityStringPrefix()
 
 private def createAdjustedTempString(double val)
 {
-    double adj = 0.0
     if (tempOffset) {
-        adj = tempOffset
+        val = val + tempOffset
+    }
+        
+    if(tempFilter)
+    {
+    	if(state.tempCelcius)
+        {
+    		val = tempFilter*val + (1.0-tempFilter)*state.tempCelcius
+        }
+        state.tempCelcius = val
     }
     
-    return tempStringPrefix() + " " +(val + adj).toString()
+    return tempStringPrefix() + " " +val.toString()
 }
 
 private def createAdjustedHumString(double val)
@@ -402,6 +415,7 @@ def refresh() {
 }
 
 def configure() {
+	state.remove("tempCelcius")
     log.debug "Configuring Reporting and Bindings."
     List cmds = zigbee.temperatureConfig(5,300)
     cmds = cmds + zigbee.configureReporting(HUMIDITY_CLUSTER_ID(), SENSOR_VALUE_ATTRIBUTE(), DataType.UINT16, 5, 300, 100)
@@ -416,7 +430,7 @@ def updated() {
 
     if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
         state.updatedLastRanAt = now()
-        
+        state.remove("tempCelcius")
         return response(refresh())
     }
     else {
