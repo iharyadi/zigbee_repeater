@@ -327,7 +327,7 @@ private def createAdjustedHumString(double val)
     return humidityStringPrefix() + " " +(val + adj).toString() + "%"
 }
 
-private def adjustTempValue(String description)
+private def adjustTempHumValue(String description)
 {
     
     if(description.startsWith(tempStringPrefix()))
@@ -369,7 +369,7 @@ private def adjustTempValue(String description)
 // Parse incoming device messages to generate events
 def parse(String description) {
     
-    description = adjustTempValue(description)
+    description = adjustTempHumValue(description)
     log.debug "description is $description"
     
     def event = zigbee.getEvent(description)
