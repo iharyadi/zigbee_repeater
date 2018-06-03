@@ -77,6 +77,11 @@ metadata {
         input "humOffset", "decimal", title: "%", description: "Adjust humidity by this many %",
               range: "*..*", displayDuringSetup: false
     }
+    
+    preferences {
+        input "illumAdj", "decimal", title: "Factor", description: "Adjust illuminace base on formula illum / Factor", 
+            range: "1..*", displayDuringSetup: false
+    }
 }
 
 private def NUMBER_OF_RESETS_ID()
@@ -217,20 +222,31 @@ private def parsePressureEvent(def descMap)
     return createPressureEvent(pressure)
 }
 
-private def createIlluminanceEvent(int ilumm)
+private def createIlluminanceEvent(int illum)
 {
     def result = [:]
     result.name = "illuminance"
     result.translatable = true
     result.unit = "Lux"
-    if(ilumm == 0)
+    
+    if(!illumAdj ||  illumAdj < 1.0)
     {
-        result.value = 0.0
+        if(ilumm == 0)
+        {
+            result.value = 0.0
+        }
+        else
+        {
+            result.value = 10.0 ** (((double) illum / 10000.0) -1.0)
+        }
+        
+    	result.value = result.value.round(2)  
     }
     else
     {
-        result.value = (10.0 ** (((double) ilumm / 10000.0) -1.0)).round(2)
+        result.value = ((double)illum / illumAdj).toInteger()
     }
+    
     result.descriptionText = "{{ device.displayName }} illuminance was $result.value"
     return result
 }
