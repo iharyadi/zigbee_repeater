@@ -7,6 +7,7 @@ metadata {
         capability "Temperature Measurement"
         capability "RelativeHumidityMeasurement"
         capability "Illuminance Measurement"
+        capability "Sensor"
         
         attribute "pressure", "string"
         
