@@ -1,7 +1,6 @@
-
 import physicalgraph.zigbee.zcl.DataType
 metadata {
-    definition (name: "Environment Sensor", namespace: "iharyadi", author: "iharyadi", ocfDeviceType: "oic.r.temperature", runLocally: false, minHubCoreVersion: '000.019.00012', executeCommandsLocally: true) {
+    definition (name: "Environment Sensor", namespace: "iharyadi", author: "iharyadi", ocfDeviceType: "oic.r.temperature", runLocally: false, minHubCoreVersion: '000.019.00012', executeCommandsLocally: true, vid: "generic-motion-6") {
         capability "Configuration"
         capability "Refresh"
         capability "Temperature Measurement"

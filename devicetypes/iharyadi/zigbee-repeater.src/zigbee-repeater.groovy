@@ -13,7 +13,7 @@ metadata {
         capability "Refresh"
         capability "Switch"
 
-        fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0B05", manufacturer: "KMPCIL", model: "RES001", deviceJoinName: "ZB Repeater"
+        fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0B05", manufacturer: "KMPCIL", model: "RES001XX", deviceJoinName: "ZB Repeater"
         }
 
     // simulator metadata
