@@ -80,40 +80,50 @@ metadata {
     }
     
     preferences {
-    
-    	section("Environment Sensor")
+		section("Environment Sensor")
         {
-    	input "tempOffset", "decimal", title: "Degrees", description: "Adjust temperature by this many degrees in Celcius",
-              range: "*..*", displayDuringSetup: false
-        input "tempFilter", "decimal", title: "Coeficient", description: "Temperature filter between 0.0 and 1.0",
-              range: "0..1", displayDuringSetup: false
-   		input "humOffset", "decimal", title: "Percent", description: "Adjust humidity by this many percent",
-              range: "*..*", displayDuringSetup: false
-        input "illumAdj", "decimal", title: "Factor", description: "Adjust illuminace base on formula illum / Factor", 
-            range: "1..*", displayDuringSetup: false
-    	}
+            input name:"tempOffset", type:"decimal", title: "Degrees", description: "Adjust temperature by this many degrees in Celcius",
+                range: "*..*", displayDuringSetup: false
+            input name:"tempFilter", type:"decimal", title: "Coeficient", description: "Temperature filter between 0.0 and 1.0",
+                range: "0..1", displayDuringSetup: false
+            input name:"humOffset", type:"decimal", title: "Percent", description: "Adjust humidity by this many percent",
+                range: "*..*", displayDuringSetup: false
+            input name:"illumAdj", type:"decimal", title: "Factor", description: "Adjust illuminace base on formula illum / Factor", 
+                range: "1..*", displayDuringSetup: false
+        }
         
         section("Expansion Sensor")
         {
-        	input "enableAnalogInput", "boolean", title: "Analog Input", description: "Enable Analog Input",
-              defaultValue: "false", displayDuringSetup: false 
-              
-            input "childAnalogInput", "text", title: "Analog Input Handler", description: "Analog Input Child Handler",
-              displayDuringSetup: false
-              
-            input "enableBinaryInput", "boolean", title: "Binary Input", description: "Enable Binary Input",
-              defaultValue: "false", displayDuringSetup: false   
+        	input name:"enableAnalogInput", type: "bool", title: "Analog Input", description: "Enable Analog Input",
+            	defaultValue: "false", displayDuringSetup: false 
             
-            input "childBinaryInput", "text", title: "Binary Input Handler", description: "Binary Input Child Handler",
-              displayDuringSetup: false
+            input name:"childAnalogInput", type:"text", title: "Analog Input Handler", description: "Analog Input Child Handler",
+               	displayDuringSetup: false
               
-            input "enableBinaryOutput", "boolean", title: "Binary Output", description: "Enable Binary Output",
-              defaultValue: "false", displayDuringSetup: false   
+            input name:"enableBinaryInput", type: "bool", title: "Binary Input", description: "Enable Binary Input",
+               	defaultValue: "false", displayDuringSetup: false
+            
+            input name:"childBinaryInput", type:"string", title: "Binary Input Handler", description: "Binary Input Device Handler",
+               	displayDuringSetup: false
               
-            input "childBinaryOutput", "text", title: "Binary Output Handler", description: "Binary Output Child Handler",
-              displayDuringSetup: false
+            input name:"enableBinaryOutput", type: "bool", title: "Binary Output", description: "Enable Binary Output",
+               	defaultValue: "false", displayDuringSetup: false  
+            
+           	input name:"childBinaryOutput", type:"text", title: "Binary Output Handler", description: "Binary Output Child Handler",
+               	displayDuringSetup: false
+        }
+        
+        section("Debug Messages")
+        {
+        	input name: "logEnabled", defaultValue: "true", type: "bool", title: "Enable info message logging", description: "",
+            	displayDuringSetup: false
         }
     }
+}
+
+private def Log(message) {
+	if (logEnabled)
+		log.info "${message}"
 }
 
 private def NUMBER_OF_RESETS_ID()
@@ -555,7 +565,7 @@ private def adjustTempHumValue(String description)
 def parse(String description) {
     
     description = adjustTempHumValue(description)
-    log.debug "description is $description"
+    Log("description is $description")
     
     def event = zigbee.getEvent(description)
     if(event)
@@ -578,7 +588,7 @@ def parse(String description) {
         return
     }
     
-    log.warn "DID NOT PARSE MESSAGE : $description"
+    Log("DID NOT PARSE MESSAGE : $description")
 }
 
 def off() {
@@ -717,7 +727,7 @@ private def refreshDiagnostic()
 }
 
 def refresh() {
-    log.debug "Refresh"
+    Log("Refresh")
     state.lastRefreshAt = new Date(now()).format("yyyy-MM-dd HH:mm:ss", location.timeZone)
      
     return refreshOnBoardSensor() + 
@@ -743,7 +753,7 @@ private def reportTEMT6000Parameters()
 
 def configure() {
 
-    log.debug "Configuring Reporting and Bindings."
+    Log("Configuring Reporting and Bindings.")
     state.remove("tempCelcius")
     
     def mapConfigure = ["RES001":reportBME280Parameters()+reportTEMT6000Parameters(),
@@ -772,7 +782,6 @@ private def createChild(String childDH, String componentName)
 	def childDevice = childDevices.find{item-> return item.deviceNetworkId == "${device.deviceNetworkId}-$childDH"}
     if(!childDevice)
     {
-    	log.debug "childDevices $childDevices childDevice $childDevice"
         childDevice = addChildDevice("iharyadi", 
                                      "$childDH", 
                                      "${device.deviceNetworkId}-$childDH", null,
@@ -784,7 +793,6 @@ private def createChild(String childDH, String componentName)
 
     }
     
-    log.debug "2222 childDevices $childDevices childDevice $childDevice"
     return childDevice?.configure_child()
 }
 
@@ -813,16 +821,14 @@ private updateExpansionSensorSetting()
         [bAnalogInput,childAnalogInput,"AnalogInput"]]
 
     mapExpansionChildrenCreate.findAll{return (it[0] && it[1])}.each{
-    	
     	cmds = cmds + createChild(it[1],it[2])
-        log.debug "ChildrenCreate $cmds"
     }
     
     return cmds
 }
 
 def updated() {
-    log.debug "updated():"
+    Log("updated():")
 
     if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
         state.updatedLastRanAt = now()
@@ -830,6 +836,6 @@ def updated() {
         return response(updateExpansionSensorSetting() + refresh())
     }
     else {
-        log.trace "updated(): Ran within last 2 seconds so aborting."
+        Log("updated(): Ran within last 2 seconds so aborting.")
     }
 }
