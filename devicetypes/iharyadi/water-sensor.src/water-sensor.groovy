@@ -3,6 +3,7 @@ metadata {
     definition (name: "Water Sensor", namespace: "iharyadi", author: "iharyadi") {
     	capability "Water Sensor"
         capability "Sensor"
+        attribute "voltage", "number"
     }
         
     tiles(scale: 2) {
@@ -12,8 +13,13 @@ metadata {
 				attributeState "wet", label: 'Wet', icon: "st.alarm.water.wet", backgroundColor: "#00A0DC"
 			}
 		}
+        
+        valueTile("voltage", "device.voltage", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
+            state "voltage", label: 'Voltage ${currentValue}${unit}', unit:"v", defaultState: true
+        }
+        
         main (["water"])
-        details(["water"])
+        details(["water", "voltage"])
     }
     
     preferences {
@@ -29,6 +35,17 @@ metadata {
         
     preferences {    
     }
+}
+
+private def createVoltageEvent(float value)
+{
+    def result = [:]
+    result.name = "analoginput"
+    result.translatable = true
+    result.value = value.round(2)
+    result.unit = "v"
+    result.descriptionText = "{{ device.displayName }} Voltage was $result.value"
+    return result
 }
 
 def parse(String description) { 
@@ -76,6 +93,7 @@ def parse(String description) {
     float volt = 0;
    	volt = (zigbee.convertHexToInt(adc) * state.lastVdd)/0x1FFF
      
+    sendEvent(createVoltageEvent(volt)) 
     event = createEvent(name:"water",value:volt > threshold? "dry":"wet")
     return event;
 }
