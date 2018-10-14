@@ -40,7 +40,7 @@ metadata {
 private def createVoltageEvent(float value)
 {
     def result = [:]
-    result.name = "analoginput"
+    result.name = "voltage"
     result.translatable = true
     result.value = value.round(2)
     result.unit = "v"
