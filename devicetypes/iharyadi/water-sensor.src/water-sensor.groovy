@@ -92,6 +92,5 @@ def installed() {
 }
 
 def updated() {
-	cmds = cmds + parent.readAttribute(0x000C, 0x0103, DataType.UINT16)
-	return cmds
+	return parent.readAttribute(0x000C, 0x0103)
 }
