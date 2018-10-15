@@ -690,10 +690,10 @@ private def refreshExpansionSensor()
 {
 	def cmds = []
     
-    def mapExpansionRefresh = [[0x0010,Boolean.parseBoolean(enableBinaryOutput),0x0055],
-    	[0x000F,Boolean.parseBoolean(enableBinaryInput),0x0055],
-        [0x000C, Boolean.parseBoolean(enableAnalogInput),0x00104],
-        [0x000C, Boolean.parseBoolean(enableAnalogInput),0x00103]]
+    def mapExpansionRefresh = [[0x0010,enableBinaryOutput,0x0055],
+    	[0x000F,enableBinaryInput,0x0055],
+        [0x000C, enableAnalogInput,0x00104],
+        [0x000C, enableAnalogInput,0x00103]]
         
     mapExpansionRefresh.findAll { return it[1] }.each{
     	cmds = cmds + zigbee.readAttribute(it[0],it[2])
@@ -799,14 +799,10 @@ private def createChild(String childDH, String componentName)
 private updateExpansionSensorSetting()
 {    
     def cmds = []
-    
-    boolean bBinaryOutput = Boolean.parseBoolean(enableBinaryOutput)
-    boolean bBinaryInput = Boolean.parseBoolean(enableBinaryInput)
-    boolean bAnalogInput = Boolean.parseBoolean(enableAnalogInput)
-    
-    def mapExpansionEnable = [[0x0010,bBinaryOutput,DataType.BOOLEAN,0x0055],
-    	[0x000F,bBinaryInput,DataType.BOOLEAN,0x0055],
-        [0x000C, bAnalogInput,DataType.UINT16,0x0103]]
+        
+    def mapExpansionEnable = [[0x0010,enableBinaryOutput,DataType.BOOLEAN,0x0055],
+    	[0x000F,enableBinaryInput,DataType.BOOLEAN,0x0055],
+        [0x000C, enableAnalogInput,DataType.UINT16,0x0103]]
         
     mapExpansionEnable.each{ 
     	cmds = cmds + zigbee.writeAttribute(it[0], 0x0051, DataType.BOOLEAN, it[1]?1:0)
@@ -816,9 +812,9 @@ private updateExpansionSensorSetting()
         }
     }
     
-    def mapExpansionChildrenCreate = [[bBinaryOutput,childBinaryOutput,"BinaryOutput"],
-    	[bBinaryInput,childBinaryInput,"BinaryInput"],
-        [bAnalogInput,childAnalogInput,"AnalogInput"]]
+    def mapExpansionChildrenCreate = [[enableBinaryOutput,childBinaryOutput,"BinaryOutput"],
+    	[enableBinaryInput,childBinaryInput,"BinaryInput"],
+        [enableAnalogInput,childAnalogInput,"AnalogInput"]]
 
     mapExpansionChildrenCreate.findAll{return (it[0] && it[1])}.each{
     	cmds = cmds + createChild(it[1],it[2])
