@@ -7,6 +7,7 @@ metadata {
         capability "RelativeHumidityMeasurement"
         capability "Illuminance Measurement"
         capability "Switch"
+        capability "Battery"
         capability "Sensor"
         
         MapDiagAttributes().each{ k, v -> attribute "$v", "number" }
@@ -21,6 +22,7 @@ metadata {
 
         
         fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0400, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES001", deviceJoinName: "Environment Sensor"
+        fingerprint profileId: "0104", inClusters: "0000, 0001, 0003, 0006, 0402, 0403, 0405, 0400, 0B05, 000F, 000C, 0010", manufacturer: "KMPCIL", model: "RES001", deviceJoinName: "Environment Sensor"
         fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES002", deviceJoinName: "Environment Sensor"
     	fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0400, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES003", deviceJoinName: "Environment Sensor"
     	fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES004", deviceJoinName: "Environment Sensor"
@@ -52,8 +54,12 @@ metadata {
             state "pressure", label: 'Pressure ${currentValue}${unit}', unit:"kPa", defaultState: true
         }
         
-        valueTile("illuminance", "device.illuminance", width:6, height: 2) {
+        valueTile("illuminance", "device.illuminance", width:3, height: 2) {
             state "illuminance", label: 'illuminance ${currentValue}${unit}', unit:"Lux", defaultState: true
+        }
+        
+        valueTile("battery", "device.battery", width:3, height: 2) {
+            state "battery", label: 'battery ${currentValue}${unit}', unit:"%", defaultState: true
         }
         
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
@@ -67,6 +73,7 @@ metadata {
         tiles_detail.add("pressure")
         
         tiles_detail.add("illuminance")
+        tiles_detail.add("battery")
                 
         MapDiagAttributes().each{ k, v -> valueTile("$v", "device.$v", width: 2, height: 2, wordWrap: true) {
                 state "val", label: "$v \n"+'${currentValue}', defaultState: true
@@ -124,6 +131,11 @@ metadata {
 private def Log(message) {
 	if (logEnabled)
 		log.info "${message}"
+}
+
+private def BATT_REMINING_ID()
+{
+    return 0x0021;
 }
 
 private def NUMBER_OF_RESETS_ID()
@@ -194,6 +206,11 @@ private def HUMIDITY_CLUSTER_ID()
 private def ILLUMINANCE_CLUSTER_ID()
 {
     return 0x0400;
+}
+
+private def POWER_CLUSTER_ID()
+{
+    return 0x0001;
 }
 
 private def SENSOR_VALUE_ATTRIBUTE()
@@ -442,6 +459,31 @@ private def reflectToChild(String childtype, String description)
     childDevice.sendEvent(childEvent)
 }
 
+private def createBattEvent(int val)
+{    
+    def result = [:]
+    result.name = "battery"
+    result.translatable = true
+    result.value = val/2
+	result.unit = "%"
+    result.descriptionText = "${device.displayName} ${result.name} was ${result.value}"  
+    return result
+}
+
+def parseBattEvent(def descMap)
+{       
+    def value = descMap.attrInt?.equals(BATT_REMINING_ID()) ? 
+        descMap.value : 
+    	null
+    
+    if(!value)
+    {
+        return null
+    }
+           
+    return createBattEvent(zigbee.convertHexToInt(value))
+}
+
 private def parseCustomEvent(String description)
 {
     def event = null
@@ -470,6 +512,10 @@ private def parseCustomEvent(String description)
         {
         	event = parseBinaryOutputEvent(descMap)
             reflectToChild(childBinaryOutput,description)
+        }
+        else if(descMap?.clusterInt == POWER_CLUSTER_ID())
+        {
+        	event = parseBattEvent(descMap)
         }
    }
    else if (description?.startsWith("catchall:"))
@@ -726,13 +772,19 @@ private def refreshDiagnostic()
     return cmds
 }
 
+private def refreshBatt()
+{
+	return zigbee.readAttribute(POWER_CLUSTER_ID(), BATT_REMINING_ID()) 
+}
+
 def refresh() {
     Log("Refresh")
     state.lastRefreshAt = new Date(now()).format("yyyy-MM-dd HH:mm:ss", location.timeZone)
      
     return refreshOnBoardSensor() + 
     	refreshExpansionSensor() + 
-        refreshDiagnostic()    
+        refreshDiagnostic()+
+        refreshBatt()
 }
 
 private def reportBME280Parameters()
@@ -766,6 +818,9 @@ def configure() {
     mapConfigure[model]?.each{
     	cmds = cmds + zigbee.configureReporting(it[0], SENSOR_VALUE_ATTRIBUTE(), it[1],it[2],it[3],it[4])
     }
+    
+    cmds += zigbee.configureReporting(POWER_CLUSTER_ID(), BATT_REMINING_ID(), DataType.UINT8,5,307,2)
+    cmds = cmds + refresh();
     
     cmds = cmds + refresh();
  
