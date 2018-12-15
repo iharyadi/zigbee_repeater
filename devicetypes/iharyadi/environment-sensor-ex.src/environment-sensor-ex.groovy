@@ -63,7 +63,11 @@ metadata {
         }
         
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
+            state "default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh"
+        }
+        
+         standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+            state "default", label:"Configure", action:"configure", icon:"st.secondary.refresh"
         }
         
         def tiles_detail = [];
@@ -81,6 +85,7 @@ metadata {
             tiles_detail.add(v);
         }
         tiles_detail.add("refresh")
+        tiles_detail.add("configure")
                 
         main "temperature"        
         details(tiles_detail)        
@@ -821,9 +826,7 @@ def configure() {
     
     cmds += zigbee.configureReporting(POWER_CLUSTER_ID(), BATT_REMINING_ID(), DataType.UINT8,5,307,2)
     cmds = cmds + refresh();
-    
-    cmds = cmds + refresh();
- 
+   
     return cmds
 }
 
