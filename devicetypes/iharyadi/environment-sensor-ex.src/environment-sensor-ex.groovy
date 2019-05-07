@@ -223,6 +223,25 @@ private def SENSOR_VALUE_ATTRIBUTE()
     return 0x0000;
 }
 
+private int getIntegerCluster(def descMap)
+{
+    int clusterInt =  0
+    if(descMap?.custerInt)
+    {
+    	clusterInt = descMap?.custerInt;
+    }
+    else if(descMap?.cluster)
+    {
+   		clusterInt = Integer.parseInt(descMap.cluster,16)
+    }
+    else if(descMap?.clusterId)
+    {
+        clusterInt = Integer.parseInt(descMap.clusterId,16)
+    }
+
+    return clusterInt;
+}
+
 private def MapDiagAttributes()
 {
     def result = [(CHILD_COUNT_ID()):'Children',
@@ -493,39 +512,42 @@ private def parseCustomEvent(String description)
 {
     def event = null
     def descMap = zigbee.parseDescriptionAsMap(description)
+    int clusterInt =  getIntegerCluster(descMap)
+    
     if(description?.startsWith("read attr - raw:"))
     {
+       
         if(descMap?.clusterInt == DIAG_CLUSTER_ID())
         {
            event = parseDiagnosticEvent(descMap);
         }
-        else if(descMap?.clusterInt == PRESSURE_CLUSTER_ID())
+        else if(clusterInt == PRESSURE_CLUSTER_ID())
         {
            event = parsePressureEvent(descMap);
         }
-        else if(descMap?.clusterInt == 0x000F)
+        else if(clusterInt == 0x000F)
         {
             event = parseBinaryInputEvent(descMap);
             reflectToChild(childBinaryInput,description)
         }
-        else if(descMap?.clusterInt == 0x000C)
+        else if(clusterInt == 0x000C)
         {
         	event = parseAnalogInputEvent(descMap)
             reflectToChild(childAnalogInput,description)
         }
-        else if(descMap?.clusterInt == 0x0010)
+        else if(clusterInt == 0x0010)
         {
         	event = parseBinaryOutputEvent(descMap)
             reflectToChild(childBinaryOutput,description)
         }
-        else if(descMap?.clusterInt == POWER_CLUSTER_ID())
+        else if(clusterInt == POWER_CLUSTER_ID())
         {
         	event = parseBattEvent(descMap)
         }
    }
    else if (description?.startsWith("catchall:"))
    {
-       if(descMap?.clusterInt == ILLUMINANCE_CLUSTER_ID() && 
+       if(clusterInt == ILLUMINANCE_CLUSTER_ID() && 
            descMap.messageType == "00" && 
            descMap.command == "01")
        {
@@ -600,11 +622,13 @@ private def adjustTempHumValue(String description)
         return description
     }
     
-    if( descMap.clusterInt == TEMPERATURE_CLUSTER_ID() )
+    int clusterInt = getIntegerCluster(descMap)
+    
+    if( clusterInt == TEMPERATURE_CLUSTER_ID() )
     {
         return createAdjustedTempString((double) zigbee.convertHexToInt(descMap.value) / 100.00)
     }
-    else if(descMap.clusterInt == HUMIDITY_CLUSTER_ID())
+    else if(clusterInt == HUMIDITY_CLUSTER_ID())
     {
         return createAdjustedHumString((double) zigbee.convertHexToInt(descMap.value) / 100.00)
     }
@@ -614,7 +638,7 @@ private def adjustTempHumValue(String description)
 
 // Parse incoming device messages to generate events
 def parse(String description) {
-    
+       
     description = adjustTempHumValue(description)
     Log("description is $description")
     
