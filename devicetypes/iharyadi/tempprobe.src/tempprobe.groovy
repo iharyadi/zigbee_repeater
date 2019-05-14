@@ -94,21 +94,21 @@ def parse(String description) {
     	tempAdusted = (((temp-tempIce) * 99.99) / (tempBoiling-tempIce)) + 0.01
     }
 	
-	def dispValue
+    def dispValue
     dispValue = String.format("%3.2f",temp)  
     sendEvent(name:"rawTemp",value:"${dispValue}", unit:"")
     
     dispValue = String.format("%3.2f",tempAdusted) 
-	sendEvent(name:"temperature",value:"${dispValue}", unit:"C")
+    sendEvent(name:"temperature",value:"${dispValue}", unit:"C")
     return null;
 }
 
 def configure_child() {
-def cmds = []
-	cmds = cmds + parent.writeAttribute(0x000C, 0x0102, DataType.UINT16, 0)
+    def cmds = []
+    cmds = cmds + parent.writeAttribute(0x000C, 0x0102, DataType.UINT16, 0)
     cmds = cmds + parent.writeAttribute(0x000C, 0x00105, DataType.UINT32, 250)
-   	cmds = cmds + parent.configureReporting(0x000C, 0x0103, DataType.UINT16, 5, 60,50)
-	return cmds
+    cmds = cmds + parent.configureReporting(0x000C, 0x0103, DataType.UINT16, 5, 60,50)
+    return cmds
 }
 
 def installed() {
