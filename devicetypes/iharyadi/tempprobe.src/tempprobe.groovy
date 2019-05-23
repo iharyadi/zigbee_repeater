@@ -107,7 +107,7 @@ def configure_child() {
     def cmds = []
     cmds = cmds + parent.writeAttribute(0x000C, 0x0102, DataType.UINT16, 0)
     cmds = cmds + parent.writeAttribute(0x000C, 0x00105, DataType.UINT32, 250)
-    cmds = cmds + parent.configureReporting(0x000C, 0x0103, DataType.UINT16, 5, 60,50)
+    cmds = cmds + parent.configureReporting(0x000C, 0x0103, DataType.UINT16, 2, 300,9)
     return cmds
 }
 
