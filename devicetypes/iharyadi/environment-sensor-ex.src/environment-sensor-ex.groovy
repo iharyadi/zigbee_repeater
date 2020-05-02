@@ -1,4 +1,6 @@
+import groovy.json.JsonSlurper
 import physicalgraph.zigbee.zcl.DataType
+import physicalgraph.zigbee.clusters.iaszone.ZoneStatus
 metadata {
     definition (name: "Environment Sensor EX", namespace: "iharyadi", author: "iharyadi", ocfDeviceType: "oic.r.temperature", runLocally: false, minHubCoreVersion: "000.019.00012", executeCommandsLocally: true, vid: "generic-motion-6") {
         capability "Configuration"
@@ -9,7 +11,7 @@ metadata {
         capability "Switch"
         capability "Battery"
         capability "Sensor"
-        
+                
         MapDiagAttributes().each{ k, v -> attribute "$v", "number" }
         
         attribute "pressure", "number"
@@ -26,6 +28,8 @@ metadata {
         fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0402, 0403, 0405, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES002", deviceJoinName: "Environment Sensor"
     	fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0400, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES003", deviceJoinName: "Environment Sensor"
     	fingerprint profileId: "0104", inClusters: "0000, 0003, 0006, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES004", deviceJoinName: "Environment Sensor"
+        fingerprint profileId: "0104", inClusters: "0000, 0001, 0003, 0006, 0402, 0403, 0405, 0400, 0B05, 000F, 000C, 0010, 1001", manufacturer: "KMPCIL", model: "RES005", deviceJoinName: "Environment Sensor"
+        fingerprint profileId: "0104", inClusters: "0000, 0001, 0003, 0006, 0402, 0403, 0405, 0400, 0B05, 000F, 000C, 0010, 0500", manufacturer: "KMPCIL", model: "RES006", deviceJoinName: "Environment Sensor"
     }
 
     // simulator metadata
@@ -62,11 +66,23 @@ metadata {
             state "battery", label: 'battery ${currentValue}${unit}', unit:"%", defaultState: true
         }
         
+        valueTile("powersource", "device.powerSource", width:3, height: 2) {
+            state "powersource", label: 'power ${currentValue}', unit:"", defaultState: true
+        }
+        
+        valueTile("smokedetector", "device.smokeDetector", width:3, height: 2) {
+            state "smokedetector", label: 'smoke detector ${currentValue}', unit:"", defaultState: true
+        }
+        
+        valueTile("carbonmonoxide", "device.carbonMonoxide", width:3, height: 2) {
+            state "carbonmonoxide", label: 'carbonmonoxide ${currentValue}', unit:"", defaultState: true
+        }
+        
         standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         
-         standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+        standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"Configure", action:"configure", icon:"st.secondary.refresh"
         }
         
@@ -125,9 +141,15 @@ metadata {
                	displayDuringSetup: false
         }
         
+        section("Serial Device Children")
+        {
+            input name:"childSerialDevices", type:"text", title: "Children[JSON]", description: "Serial Children Handler",
+                   displayDuringSetup: false
+        }
+        
         section("Debug Messages")
         {
-        	input name: "logEnabled", defaultValue: "true", type: "bool", title: "Enable info message logging", description: "",
+        	input name: "logEnabled", defaultValue: "false", type: "bool", title: "Enable info message logging", description: "",
             	displayDuringSetup: false
         }
     }
@@ -216,6 +238,11 @@ private def ILLUMINANCE_CLUSTER_ID()
 private def POWER_CLUSTER_ID()
 {
     return 0x0001;
+}
+
+private def SERIAL_TUNNEL_CLUSTER_ID()
+{
+    return 0x1001;
 }
 
 private def SENSOR_VALUE_ATTRIBUTE()
@@ -483,6 +510,29 @@ private def reflectToChild(String childtype, String description)
     childDevice.sendEvent(childEvent)
 }
 
+private def reflectToSerialChild(def data)
+{
+    def zigbeeAddress = device.getZigbeeId()
+    
+    Integer page = zigbee.convertHexToInt(data[1])
+    
+    def childDevice = childDevices?.find{item-> 
+    		return item.deviceNetworkId == "$zigbeeAddress-SerialDevice-$page"
+    	}
+            
+    if(!childDevice)
+    {
+        return    
+    }
+     
+    def childEvent = childDevice.parse(data)
+    if(!childEvent)
+    {
+        return
+    }
+    
+    childDevice.sendEvent(childEvent)  
+}
 private def createBattEvent(int val)
 {    
     def result = [:]
@@ -635,18 +685,130 @@ private def adjustTempHumValue(String description)
     
     return description 
  }
+ 
+boolean parseSerial(String description)
+{
+    if(!description?.startsWith("catchall:"))
+    {
+         return false   
+    }
+        
+    def descMap = zigbee.parseDescriptionAsMap(description)
+
+    if( !(descMap.profileId?.equals("0104") ) )
+    {
+        return false
+    }    
+    
+    if( !(descMap.clusterInt?.equals(SERIAL_TUNNEL_CLUSTER_ID()) ) )
+    {
+        return false
+    }
+    
+    if( !(descMap.command?.equals("00") ) )
+    {
+        return false
+    }
+    
+    if(!descMap.data)
+    {
+        return false
+    }
+    
+    reflectToSerialChild(descMap.data)
+      
+    return true
+}
+
+private boolean parseIasMessage(String description) {
+        
+    if (description?.startsWith('enroll request')) 
+    {
+		Log ("Sending IAS enroll response...")
+        
+		def cmds = zigbee.enrollResponse()
+        
+        cmds?.collect{ sendHubCommand(new physicalgraph.device.HubAction(it)) };
+        return true
+	}
+    else if (description?.startsWith('zone status ')) 
+    {        
+    	def childDevice = childDevices?.find{item-> 
+    		return item.deviceNetworkId == "${device.deviceNetworkId}-Smoke Alarm"
+    	}
+        
+        if(!childDevice)
+        {
+        	return true;
+        }
+        
+        ZoneStatus zs = zigbee.parseZoneStatus(description)
+        String[] iasinfo = description.split(" ")
+        int x =  Integer.decode(iasinfo[6]);
+        
+        def resultMap;
+        
+        if(zs.alarm1)
+        {
+            if(x == 0)
+            {
+                resultMap = createEvent(name: "smoke", value: "detected")
+            }
+            else
+            {
+                resultMap = createEvent(name: "carbonMonoxide", value: "detected")
+            }
+            
+            childDevice.sendEvent(resultMap)
+            
+        }
+        else
+        {
+            
+           resultMap = createEvent(name: "smoke", value: "clear")
+           childDevice.sendEvent(resultMap)
+            
+           resultMap = createEvent(name: "carbonMonoxide", value: "clear")
+           childDevice.sendEvent(resultMap)
+        }
+     
+        if(zs.ac)
+        {
+            resultMap = createEvent(name: "powerSource", value: "battery")
+        }
+        else
+        {
+            resultMap = createEvent(name: "powerSource", value: "main")
+        }   
+        childDevice.sendEvent(resultMap)
+        
+        return true
+    }
+    
+    return false
+}
 
 // Parse incoming device messages to generate events
-def parse(String description) {
-       
-    description = adjustTempHumValue(description)
+def parse(String description) {   
     Log("description is $description")
+    description = adjustTempHumValue(description)
+    
     
     def event = zigbee.getEvent(description)
     if(event)
     {
         sendEvent(event)
         return
+    }
+    
+    if(parseIasMessage(description))
+    {
+        return
+    }
+    
+    if(parseSerial(description))
+    {
+        return   
     }
     
     event = parseIlluminanceEventFromString(description)
@@ -680,6 +842,15 @@ def sendCommandP(def cmd)
     {
 		sendHubCommand(cmd.collect { new physicalgraph.device.HubAction(it) }, 0)
     }
+}
+
+def sendToSerialdevice(String serialCmd)
+{
+    byte[] bt = serialCmd.getBytes();
+    
+    String serial = bt.encodeHex()    
+    
+    return zigbee.command(SERIAL_TUNNEL_CLUSTER_ID(), 0x00, serial)
 }
 
 def command(Integer Cluster, Integer Command, String payload)
@@ -785,7 +956,9 @@ private def refreshOnBoardSensor()
     
      def mapRefresh = ["RES001":[TEMPERATURE_CLUSTER_ID(), HUMIDITY_CLUSTER_ID(), PRESSURE_CLUSTER_ID(),ILLUMINANCE_CLUSTER_ID()],
      	"RES002":[TEMPERATURE_CLUSTER_ID(), HUMIDITY_CLUSTER_ID(), PRESSURE_CLUSTER_ID()],
-        "RES003":[ILLUMINANCE_CLUSTER_ID()]]
+        "RES003":[ILLUMINANCE_CLUSTER_ID()],
+        "RES005":[TEMPERATURE_CLUSTER_ID(), HUMIDITY_CLUSTER_ID(), PRESSURE_CLUSTER_ID(),ILLUMINANCE_CLUSTER_ID()],
+        "RES006":[TEMPERATURE_CLUSTER_ID(), HUMIDITY_CLUSTER_ID(), PRESSURE_CLUSTER_ID(),ILLUMINANCE_CLUSTER_ID()]]
      
     mapRefresh[model]?.each{
     	cmds = cmds + zigbee.readAttribute(it,SENSOR_VALUE_ATTRIBUTE());
@@ -832,23 +1005,68 @@ private def reportTEMT6000Parameters()
     return reportParameters
 }
 
+private String swapEndianHex(String hex) {
+	reverseArray(hex.decodeHex()).encodeHex()
+}
+
+private byte[] reverseArray(byte[] array) {
+	int i = 0;
+	int j = array.length - 1;
+	byte tmp;
+	while (j > i) {
+		tmp = array[j];
+		array[j] = array[i];
+		array[i] = tmp;
+		j--;
+		i++;
+	}
+	return array
+}
+
+private def configureIASZone()
+{   
+    def cmds = []
+    
+    cmds += "zdo bind 0x${device.deviceNetworkId} 0x${device.endpointId} 0x01 0x0500 {${device.zigbeeId}} {}"
+    cmds += "delay 2000"
+    String idd = swapEndianHex(device.hub.zigbeeId).toUpperCase()
+    cmds += "st wattr 0x${device.deviceNetworkId} 0x${device.endpointId} 0x0500 0x0010 0xf0 {$idd}"
+    cmds += "delay 2000"
+    cmds += zigbee.enrollResponse();
+   
+    return cmds
+}
+
+
 def configure() {
 
+    runIn(60,OledUpdate)
+    
     Log("Configuring Reporting and Bindings.")
     state.remove("tempCelcius")
     
     def mapConfigure = ["RES001":reportBME280Parameters()+reportTEMT6000Parameters(),
     	"RES002":reportBME280Parameters(),
-        "RES003":reportTEMT6000Parameters()]
+        "RES003":reportTEMT6000Parameters(),
+        "RES005":reportBME280Parameters()+reportTEMT6000Parameters(),
+        "RES006":reportBME280Parameters()+reportTEMT6000Parameters()]
     
     def model = device.getDataValue("model")
     
     def cmds = [];
+    
     mapConfigure[model]?.each{
     	cmds = cmds + zigbee.configureReporting(it[0], SENSOR_VALUE_ATTRIBUTE(), it[1],it[2],it[3],it[4])
     }
     
     cmds += zigbee.configureReporting(POWER_CLUSTER_ID(), BATT_REMINING_ID(), DataType.UINT8,5,307,2)
+    
+    if(model == "RES006")
+    {
+       createChild("Smoke Alarm", "SmokeAlarm")
+       cmds = cmds + configureIASZone()
+    }
+        
     cmds = cmds + refresh();
    
     return cmds
@@ -905,13 +1123,74 @@ private updateExpansionSensorSetting()
     return cmds
 }
 
+private def createSerialDeviceChild(String childDH, Integer page)
+{    
+    if(!childDH)
+    {
+        return null
+    }
+    
+    def zigbeeAddress = device.getZigbeeId()
+    
+    def childDevice = childDevices?.find{item-> 
+    		return item.deviceNetworkId == "$zigbeeAddress-SerialDevice-$page"
+    	}
+        
+    if(!childDevice)
+    {                                  
+        childDevice = addChildDevice("iharyadi", 
+                       "$childDH", 
+                       "$zigbeeAddress-SerialDevice-$page",
+                       null,
+                       [completedSetup: true,
+                        label: "${device.displayName} SerialDevice-$page",
+                        isComponent: false, 
+                        componentName: "SerialDevice-$page", 
+                        componentLabel: "${device.displayName} SerialDevice-$page",
+                        pageNumber: page])
+    }
+    
+    return childDevice?.configure_child()
+}
+
+private def updateSerialDevicesSetting()
+{   
+    if(!childSerialDevices)
+    {
+        return;   
+    }
+    
+    def cmds = []
+    
+    def jsonSlurper = new JsonSlurper()
+    def serialchild = jsonSlurper.parseText(childSerialDevices)
+    
+    serialchild.each{
+        createSerialDeviceChild(it.DH, it.Page)
+    } 
+    
+    cmds += "zdo bind 0x${device.deviceNetworkId} 0x${device.endpointId} 0x01 0x1001 {${device.zigbeeId}} {}"
+    cmds += "delay 1500"       
+    
+    return cmds
+}
+
 def updated() {
     Log("updated():")
 
     if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 2000) {
         state.updatedLastRanAt = now()
         state.remove("tempCelcius")
-        return response(updateExpansionSensorSetting() + refresh())
+        
+        def cmds = updateExpansionSensorSetting()
+        
+        if(device.getDataValue("model") == "RES005")
+        {
+            cmds += updateSerialDevicesSetting()
+        }
+        
+        cmds += refresh()
+        return response(cmds)
     }
     else {
         Log("updated(): Ran within last 2 seconds so aborting.")
