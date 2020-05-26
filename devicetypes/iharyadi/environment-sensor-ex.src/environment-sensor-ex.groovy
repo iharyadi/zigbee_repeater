@@ -1155,12 +1155,11 @@ private def createSerialDeviceChild(String childDH, Integer page)
 
 private def updateSerialDevicesSetting()
 {   
+	def cmds = []
     if(!childSerialDevices)
     {
-        return;   
+        return cmds;   
     }
-    
-    def cmds = []
     
     def jsonSlurper = new JsonSlurper()
     def serialchild = jsonSlurper.parseText(childSerialDevices)
