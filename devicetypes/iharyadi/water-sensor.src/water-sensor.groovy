@@ -94,7 +94,10 @@ def parse(String description) {
    	volt = (zigbee.convertHexToInt(adc) * state.lastVdd)/0x1FFF
      
     sendEvent(createVoltageEvent(volt)) 
-    event = createEvent(name:"water",value:volt > threshold? "dry":"wet")
+    
+    float voltageDryWet = threshold? threshold:2.0
+    event = createEvent(name:"water",value:(volt > voltageDryWet)? "dry":"wet")
+    
     return event;
 }
 
