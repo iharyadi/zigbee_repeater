@@ -4,6 +4,7 @@ metadata {
     	capability "Water Sensor"
         capability "Sensor"
         attribute "voltage", "number"
+        attribute "moisture", "number"
     }
         
     tiles(scale: 2) {
@@ -18,16 +19,25 @@ metadata {
             state "voltage", label: 'Voltage ${currentValue}${unit}', unit:"v", defaultState: true
         }
         
+        valueTile("moisture", "device.moisture", inactiveLabel: false, width: 3, height: 2, wordWrap: true) {
+            state "moisture", label: 'Voltage ${currentValue}${unit}', unit:"%", defaultState: true
+        }
+        
         main (["water"])
         details(["water", "voltage"])
     }
     
     preferences {
         section("setup")
-           {
-                input name:"threshold", type:"decimal", title: "Threshold", description: "Threshold voltage which considered as dry",
-                    range: "0..3.3", displayDuringSetup: false, defaultValue: 2.0
-           }
+        {
+        	input name:"threshold", type:"decimal", title: "Threshold", description: "Threshold voltage which considered as dry",
+            	range: "0..3.3", displayDuringSetup: false, defaultValue: 2.0
+            input name:"minVoltage", type:"decimal", title: "0% voltage", description: "Voltage when mositure is 0%",
+            	range: "0..3.3", displayDuringSetup: false, defaultValue: 2.7
+            input name:"maxVoltage", type:"decimal", title: "100% voltage", description: "Voltage when mositure is 100%",
+            	range: "0..3.3", displayDuringSetup: false, defaultValue: 1.5
+            
+        }
     }
     // simulator metadata
     simulator {
@@ -47,6 +57,45 @@ private def createVoltageEvent(float value)
     result.descriptionText = "{{ device.displayName }} Voltage was $result.value"
     return result
 }
+
+def createMoistureEvent(float voltage)
+{
+	def result = [:]
+    
+    float minVoltageTemp = 2.7 
+    float maxVoltageTemp = 1.5 
+    
+	if(minVoltage)
+    {
+    	minVoltageTemp = minVoltage
+    }
+    
+    if(maxVoltage)
+    {
+    	maxVoltageTemp = maxVoltage
+    }
+    
+    int percentMoisture =  (-100.0 * (voltage - minVoltageTemp) / (minVoltageTemp - maxVoltageTemp)).round(0)
+    
+    if(percentMoisture > 100)
+    {
+    	percentMoisture = 100
+    }
+    
+    if(percentMoisture < 0)
+    {
+    	percentMoisture = 0
+    }
+    
+    result.name = "moisture"
+    result.translatable = true
+    result.value = percentMoisture
+    result.unit = "%"
+    result.descriptionText = "{{ device.displayName }} Moisture was $result.value"
+    
+    return result;
+}
+
 
 def parse(String description) { 
 
@@ -93,12 +142,11 @@ def parse(String description) {
     float volt = 0;
    	volt = (zigbee.convertHexToInt(adc) * state.lastVdd)/0x1FFF
      
+    sendEvent(createMoistureEvent(volt))
     sendEvent(createVoltageEvent(volt)) 
     
     float voltageDryWet = threshold? threshold:2.0
-    event = createEvent(name:"water",value:(volt > voltageDryWet)? "dry":"wet")
-    
-    return event;
+    return createEvent(name:"water",value:(volt > voltageDryWet)? "dry":"wet")
 }
 
 def configure_child() {
