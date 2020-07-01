@@ -33,7 +33,7 @@ preferences {
 
 private float byteArrayToFloat(def byteArray) {
     int intBits = 
-      zigbee.convertHexToInt(byteArray[3]) << 24 | (zigbee.convertHexToInt(byteArray[2]) & 0xFF) << 16 | (zigbee.convertHexToInt(byteArray[1]) & 0xFF) << 8 | (zigbee.convertHexToInt(byteArray[0]) & 0xFF);
+      (zigbee.convertHexToInt(byteArray[3]) & 0xFF) << 24 | (zigbee.convertHexToInt(byteArray[2]) & 0xFF) << 16 | (zigbee.convertHexToInt(byteArray[1]) & 0xFF) << 8 | (zigbee.convertHexToInt(byteArray[0]) & 0xFF);
     return Float.intBitsToFloat(intBits);  
 }
 
