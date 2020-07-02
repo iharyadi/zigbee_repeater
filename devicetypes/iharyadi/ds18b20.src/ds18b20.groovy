@@ -40,7 +40,7 @@ private float byteArrayToFloat(def byteArray) {
 def parse(def data) { 
 	def event;
     
-    float dispValue = (float) byteArrayToFloat(data[2..5]).round(2);
+    float dispValue = byteArrayToFloat(data[2..5]).round(2);
     
     def result = [:]
     result.name = "temperature"
