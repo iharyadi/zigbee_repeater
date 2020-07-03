@@ -338,16 +338,16 @@ private def createIlluminanceEvent(int illum)
     result.name = "illuminance"
     result.translatable = true
     result.unit = "Lux"
-    result.value = 0.0
-    
+ 
     if(!illumAdj ||  illumAdj < 1.0)
     {
+    	double val = 0.0
         if(ilumm > 0)
         {
-            result.value = 10.0 ** (((double) illum -1.0)/10000.0)
+            val = 10.0 ** (((double) illum -1.0)/10000.0)
         }
         
-    	result.value = result.value.round(2)  
+    	result.value = val.round(2)  
     }
     else
     {
