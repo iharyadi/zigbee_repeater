@@ -354,7 +354,6 @@ private def createIlluminanceEvent(int illum)
         result.value = ((double)illum / illumAdj).toInteger()
     }
     
-    log.info "result ${result}"
     result.descriptionText = "{{ device.displayName }} illuminance was $result.value"
     return result
 }
