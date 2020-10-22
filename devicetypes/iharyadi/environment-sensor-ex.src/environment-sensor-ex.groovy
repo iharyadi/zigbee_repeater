@@ -1084,9 +1084,7 @@ private def createChild(String childDH, String componentName)
                                      "${device.deviceNetworkId}-$childDH", null,
                                      [completedSetup: true, 
                                       label: "${device.displayName} $childDH",
-                                      isComponent: false, 
-                                      componentName: componentName, 
-                                      componentLabel: "${device.displayName} $childDH"])
+                                      isComponent: false])
 
     }
     
